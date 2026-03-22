@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🕌 Salah Lyon</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕌</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231a6b3c' rx='20'/><text y='.85em' font-size='75' x='12'>🕌</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Salah Lyon">
+<meta name="theme-color" content="#1a6b3c">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1923;
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a6b3c, #0d4a28);
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #2ecc71;
+  }
+
+  .header h1 { font-size: 22px; letter-spacing: 1px; }
+  .header p { font-size: 13px; color: #a8e6c0; margin-top: 4px; }
+
+  .next-prayer {
+    background: linear-gradient(135deg, #1a6b3c, #145c32);
+    margin: 16px;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #2ecc71;
+  }
+
+  .next-label { font-size: 12px; color: #a8e6c0; text-transform: uppercase; letter-spacing: 2px; }
+  .next-name { font-size: 32px; font-weight: bold; margin: 6px 0; }
+  .next-time { font-size: 48px; font-weight: bold; color: #2ecc71; font-variant-numeric: tabular-nums; }
+  .countdown { font-size: 15px; color: #a8e6c0; margin-top: 8px; }
+
+  .prayers-list {
+    margin: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .prayer-item {
+    background: #1a2535;
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #2a3545;
+    transition: all 0.3s;
+  }
+
+  .prayer-item.active {
+    border-color: #2ecc71;
+    background: #1a3528;
+  }
+
+  .prayer-item.passed { opacity: 0.5; }
+
+  .prayer-name { font-size: 16px; font-weight: 600; }
+  .prayer-name span { font-size: 12px; color: #8899aa; display: block; margin-top: 2px; }
+  .prayer-time { font-size: 20px; font-weight: bold; color: #2ecc71; }
+
+  .prayer-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #2a3545;
+    margin-right: 12px;
+  }
+  .prayer-item.active .prayer-dot { background: #2ecc71; }
+
+  .prayer-left { display: flex; align-items: center; }
+
+  .date-bar {
+    text-align: center;
+    padding: 12px;
+    color: #8899aa;
+    font-size: 13px;
+  }
+
+  /* ÉCRAN DE BLOCAGE */
+  #block-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0a0f15;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+  }
+
+  #block-screen.visible { display: flex; }
+
+  .block-icon { font-size: 80px; margin-bottom: 20px; animation: pulse 2s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .block-title { font-size: 28px; font-weight: bold; color: #2ecc71; margin-bottom: 10px; }
+  .block-subtitle { font-size: 16px; color: #a8e6c0; margin-bottom: 30px; line-height: 1.6; }
+
+  .block-timer {
+    font-size: 56px;
+    font-weight: bold;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 10px;
+  }
+
+  .block-timer-label { font-size: 13px; color: #8899aa; }
+
+  .ayah {
+    margin-top: 30px;
+    padding: 16px 20px;
+    background: #1a2535;
+    border-radius: 12px;
+    border-left: 3px solid #2ecc71;
+    font-size: 14px;
+    color: #c0d8cc;
+    line-height: 1.7;
+    max-width: 320px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #8899aa;
+  }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid #2a3545;
+    border-top-color: #2ecc71;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #3a4a5a;
+    font-size: 12px;
+  }
+
+  /* NAV BAS */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #0d1520;
+    border-top: 1px solid #2a3545;
+    display: flex;
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 12px 0 8px;
+    text-align: center;
+    cursor: pointer;
+    color: #8899aa;
+    font-size: 11px;
+    border: none;
+    background: none;
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: #2ecc71; }
+  .nav-btn .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+
+  /* PAGES */
+  .page { display: none; padding-bottom: 70px; }
+  .page.active { display: block; }
+
+  /* CORAN */
+  .search-bar {
+    margin: 12px 16px;
+    position: relative;
+  }
+  .search-bar input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    background: #1a2535;
+    border: 1px solid #2a3545;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+  }
+  .search-bar input::placeholder { color: #8899aa; }
+  .search-bar .search-icon {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: #8899aa;
+    font-size: 16px;
+  }
+
+  .surah-list { margin: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .surah-item {
+    background: #1a2535;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    border: 1px solid #2a3545;
+    transition: border-color 0.2s;
+  }
+  .surah-item:hover { border-color: #2ecc71; }
+  .surah-num {
+    width: 38px; height: 38px;
+    background: #1a6b3c;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold; color: #2ecc71;
+    flex-shrink: 0;
+  }
+  .surah-info { flex: 1; }
+  .surah-name-fr { font-size: 15px; font-weight: 600; }
+  .surah-name-ar { font-size: 12px; color: #8899aa; margin-top: 2px; }
+  .surah-verses { font-size: 12px; color: #8899aa; }
+
+  /* VUE SOURATE */
+  #surah-view {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0f1923;
+    z-index: 200;
+    flex-direction: column;
+  }
+  #surah-view.visible { display: flex; }
+  .surah-header {
+    background: linear-gradient(135deg, #1a6b3c, #0d4a28);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid #2ecc71;
+  }
+  .back-btn {
+    background: none; border: none; color: #fff;
+    font-size: 22px; cursor: pointer; padding: 4px 8px;
+  }
+  .surah-header-info { flex: 1; }
+  .surah-header-info h2 { font-size: 18px; }
+  .surah-header-info p { font-size: 12px; color: #a8e6c0; margin-top: 2px; }
+
+  .audio-bar {
+    background: #1a2535;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #2a3545;
+  }
+  .play-btn {
+    width: 42px; height: 42px;
+    background: #2ecc71;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .audio-label { font-size: 13px; color: #a8e6c0; }
+  .audio-label strong { color: #fff; display: block; font-size: 14px; }
+
+  .verses-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .verse-item {
+    background: #1a2535;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #2a3545;
+  }
+  .verse-arabic {
+    font-size: 22px;
+    text-align: right;
+    line-height: 1.8;
+    color: #fff;
+    font-family: 'Amiri', 'Traditional Arabic', serif;
+    margin-bottom: 10px;
+  }
+  .verse-french {
+    font-size: 14px;
+    color: #a8e6c0;
+    line-height: 1.6;
+    border-top: 1px solid #2a3545;
+    padding-top: 10px;
+  }
+  .verse-num {
+    font-size: 11px;
+    color: #2ecc71;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .verse-loading { text-align: center; padding: 40px; color: #8899aa; }
+
+
+  /* APPRENDRE */
+  .learn-sections { margin: 0 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+  .learn-card {
+    background: #1a2535;
+    border-radius: 14px;
+    border: 1px solid #2a3545;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .learn-card-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .learn-card-icon { font-size: 28px; }
+  .learn-card-title { font-size: 16px; font-weight: 700; }
+  .learn-card-sub { font-size: 12px; color: #8899aa; margin-top: 2px; }
+  .learn-card-arrow { margin-left: auto; color: #8899aa; font-size: 18px; transition: transform 0.3s; }
+  .learn-card.open .learn-card-arrow { transform: rotate(90deg); }
+  .learn-card-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid #2a3545;
+  }
+  .learn-card.open .learn-card-body { display: block; }
+  .learn-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2ecc71;
+    margin: 14px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .learn-text {
+    font-size: 14px;
+    color: #c0d8cc;
+    line-height: 1.7;
+  }
+  .pilier-item {
+    background: #0f1923;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-left: 3px solid #2ecc71;
+  }
+  .pilier-num { font-size: 11px; color: #2ecc71; font-weight: 700; margin-bottom: 4px; }
+  .pilier-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .pilier-desc { font-size: 13px; color: #8899aa; line-height: 1.5; }
+  .doua-item {
+    background: #0f1923;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .doua-title { font-size: 13px; color: #2ecc71; font-weight: 700; margin-bottom: 8px; }
+  .doua-arabic { font-size: 18px; text-align: right; line-height: 1.8; margin-bottom: 8px; font-family: 'Traditional Arabic', serif; }
+  .doua-fr { font-size: 13px; color: #8899aa; line-height: 1.5; font-style: italic; }
+  .step-item {
+    display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start;
+  }
+  .step-num {
+    width: 28px; height: 28px; background: #1a6b3c; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #2ecc71; flex-shrink: 0;
+  }
+  .step-text { font-size: 14px; color: #c0d8cc; line-height: 1.6; padding-top: 4px; }
+  .habitude-item {
+    display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;
+  }
+  .habitude-icon { font-size: 20px; flex-shrink: 0; }
+  .habitude-text { font-size: 14px; color: #c0d8cc; line-height: 1.6; }
+  .hadith-box {
+    background: #0f1923;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border-left: 3px solid #f39c12;
+  }
+  .hadith-text { font-size: 14px; color: #f5e6c8; line-height: 1.6; font-style: italic; margin-bottom: 6px; }
+  .hadith-source { font-size: 12px; color: #f39c12; font-weight: 700; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🕌 Salah Lyon</h1>
+  <p>Horaires de prière · Coran</p>
+</div>
+
+<!-- PAGE PRIÈRE -->
+<div class="page active" id="page-prayer">
+  <div class="date-bar" id="date-bar">Chargement...</div>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement des horaires...</p>
+  </div>
+  <div style="width:100%;height:180px;overflow:hidden;position:relative;margin-bottom:0">
+  <img src="https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=800&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.5" alt="Mosquée">
+  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent,#0f1923)"></div>
+</div>
+<div id="next-prayer-card" class="next-prayer" style="display:none">
+    <div class="next-label">Prochaine prière</div>
+    <div class="next-name" id="next-name">—</div>
+    <div class="next-time" id="next-time">—</div>
+    <div class="countdown" id="countdown">—</div>
+  </div>
+  <div class="prayers-list" id="prayers-list"></div>
+  <footer>Données via Aladhan API · Lyon</footer>
+</div>
+
+<!-- PAGE CORAN -->
+<div class="page" id="page-quran">
+  <div style="width:100%;height:150px;overflow:hidden;position:relative">
+  <img src="https://images.unsplash.com/photo-1585036156171-384164a8c675?w=800&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.6" alt="Coran">
+  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent,#0f1923);display:flex;align-items:center;justify-content:center;flex-direction:column">
+    <div style="font-size:28px;font-weight:bold;color:#fff;text-shadow:0 2px 8px #000">📖 Le Saint Coran</div>
+    <div style="font-size:13px;color:#a8e6c0;margin-top:4px">114 Sourates · Traduction française</div>
+  </div>
+</div>
+<div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="surah-search" placeholder="Rechercher une sourate..." oninput="filterSurahs()">
+  </div>
+  <div class="surah-list" id="surah-list">
+    <div class="loading"><div class="spinner"></div><p>Chargement des sourates...</p></div>
+  </div>
+</div>
+
+<!-- VUE SOURATE -->
+<div id="surah-view">
+  <div class="surah-header">
+    <button class="back-btn" onclick="closeSurah()">←</button>
+    <div class="surah-header-info">
+      <h2 id="sv-name">—</h2>
+      <p id="sv-info">—</p>
+    </div>
+    <div style="font-size:24px" id="sv-ar">—</div>
+  </div>
+  <div class="audio-bar">
+    <button class="play-btn" id="play-btn" onclick="toggleAudio()">▶</button>
+    <div class="audio-label">
+      <strong>Écouter la récitation</strong>
+      Mishary Rashid Al-Afasy
+    </div>
+  </div>
+  <div class="verses-container" id="verses-container">
+    <div class="verse-loading"><div class="spinner"></div><p>Chargement...</p></div>
+  </div>
+</div>
+
+
+<!-- PAGE APPRENDRE -->
+<div class="page" id="page-learn">
+  <div class="learn-sections" style="margin-top:12px">
+
+    <!-- 5 PILIERS -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div style="height:120px;overflow:hidden;position:relative;border-radius:14px 14px 0 0">
+        <img src="https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.7" alt="Kaaba">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent,#1a2535)"></div>
+      </div>
+      <div class="learn-card-header">
+        <div class="learn-card-icon">🕋</div>
+        <div><div class="learn-card-title">Les 5 piliers de l'Islam</div><div class="learn-card-sub">Les fondements de la foi</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="pilier-item"><div class="pilier-num">PILIER 1</div><div class="pilier-title">🗣️ La Shahada — Témoignage de foi</div><div class="pilier-desc">« Il n'y a de divinité qu'Allah, et Muhammad est Son messager. » C'est l'acte d'entrée dans l'Islam.</div></div>
+        <div class="pilier-item"><div class="pilier-num">PILIER 2</div><div class="pilier-title">🙏 La Salah — La prière</div><div class="pilier-desc">5 prières obligatoires par jour : Fajr, Dhuhr, Asr, Maghrib, Isha. Elles maintiennent le lien avec Allah.</div></div>
+        <div class="pilier-item"><div class="pilier-num">PILIER 3</div><div class="pilier-title">💰 La Zakat — L'aumône</div><div class="pilier-desc">Donner 2,5% de ses économies annuelles aux personnes dans le besoin. Purifie la richesse.</div></div>
+        <div class="pilier-item"><div class="pilier-num">PILIER 4</div><div class="pilier-title">🌙 Le Sawm — Le jeûne</div><div class="pilier-desc">Jeûner durant le mois de Ramadan, du lever au coucher du soleil. Discipline spirituelle et sociale.</div></div>
+        <div class="pilier-item"><div class="pilier-num">PILIER 5</div><div class="pilier-title">🕋 Le Hajj — Le pèlerinage</div><div class="pilier-desc">Se rendre à La Mecque au moins une fois dans sa vie, si on en a les moyens physiques et financiers.</div></div>
+      </div>
+    </div>
+
+    <!-- WUDHU ET SALAH -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div style="height:120px;overflow:hidden;position:relative;border-radius:14px 14px 0 0">
+        <img src="https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.7" alt="Prière">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent,#1a2535)"></div>
+      </div>
+      <div class="learn-card-header">
+        <div class="learn-card-icon">💧</div>
+        <div><div class="learn-card-title">Comment faire la prière</div><div class="learn-card-sub">Wudhu, Salah, étapes complètes</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="learn-section-title">💧 Le Wudhu (ablutions)</div>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Faire l'intention (niyyah) dans son cœur</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Dire « Bismillah » et se laver les mains 3 fois</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Se rincer la bouche 3 fois</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Se rincer le nez 3 fois</div></div>
+        <div class="step-item"><div class="step-num">5</div><div class="step-text">Se laver le visage 3 fois (du front au menton, d'une oreille à l'autre)</div></div>
+        <div class="step-item"><div class="step-num">6</div><div class="step-text">Se laver les bras jusqu'aux coudes 3 fois (droite puis gauche)</div></div>
+        <div class="step-item"><div class="step-num">7</div><div class="step-text">Passer les mains mouillées sur la tête (masah)</div></div>
+        <div class="step-item"><div class="step-num">8</div><div class="step-text">Nettoyer les oreilles</div></div>
+        <div class="step-item"><div class="step-num">9</div><div class="step-text">Se laver les pieds jusqu'aux chevilles 3 fois (droite puis gauche)</div></div>
+
+        <div class="learn-section-title">🙏 Les étapes de la Salah</div>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Se mettre debout face à la Qibla (direction de La Mecque)</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Faire l'intention de la prière</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Takbir d'ouverture : lever les mains et dire « Allahu Akbar »</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Réciter Al-Fatiha puis une sourate</div></div>
+        <div class="step-item"><div class="step-num">5</div><div class="step-text">Ruku : se pencher en disant « Subhana Rabbiyal Adhim »</div></div>
+        <div class="step-item"><div class="step-num">6</div><div class="step-text">Se relever en disant « Sami Allahu liman hamidah »</div></div>
+        <div class="step-item"><div class="step-num">7</div><div class="step-text">Sujud : se prosterner en disant « Subhana Rabbiyal A'la » (2 fois)</div></div>
+        <div class="step-item"><div class="step-num">8</div><div class="step-text">S'asseoir entre les deux prosternations</div></div>
+        <div class="step-item"><div class="step-num">9</div><div class="step-text">Répéter selon le nombre de raka'at de la prière</div></div>
+        <div class="step-item"><div class="step-num">10</div><div class="step-text">Tashahhud final et Taslim : « As-salamu alaykum wa rahmatullah » (droite puis gauche)</div></div>
+
+        <div class="learn-section-title">📋 Nombre de raka'at par prière</div>
+        <div class="learn-text">
+          🌅 <strong>Fajr</strong> : 2 raka'at · 
+          ☀️ <strong>Dhuhr</strong> : 4 raka'at · 
+          🌤️ <strong>Asr</strong> : 4 raka'at · 
+          🌇 <strong>Maghrib</strong> : 3 raka'at · 
+          🌙 <strong>Isha</strong> : 4 raka'at
+        </div>
+      </div>
+    </div>
+
+    <!-- BONNES HABITUDES -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div class="learn-card-header">
+        <div class="learn-card-icon">⭐</div>
+        <div><div class="learn-card-title">Bonnes habitudes du musulman</div><div class="learn-card-sub">Sunnahs et comportements</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="learn-section-title">🌅 Le matin</div>
+        <div class="habitude-item"><div class="habitude-icon">🤲</div><div class="habitude-text">Faire la prière de Fajr à l'heure</div></div>
+        <div class="habitude-item"><div class="habitude-icon">📖</div><div class="habitude-text">Lire quelques versets du Coran après Fajr</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🌿</div><div class="habitude-text">Dire les adhkars du matin (dhikr)</div></div>
+        <div class="habitude-item"><div class="habitude-icon">😊</div><div class="habitude-text">Sourire à ses frères et sœurs — c'est une sadaqa</div></div>
+
+        <div class="learn-section-title">🌙 Le soir</div>
+        <div class="habitude-item"><div class="habitude-icon">🤲</div><div class="habitude-text">Dire les adhkars du soir avant de dormir</div></div>
+        <div class="habitude-item"><div class="habitude-icon">😴</div><div class="habitude-text">Dormir en wudhu, sur le côté droit</div></div>
+        <div class="habitude-item"><div class="habitude-icon">📖</div><div class="habitude-text">Lire Ayat Al-Kursi avant de dormir</div></div>
+
+        <div class="learn-section-title">🤝 Avec les autres</div>
+        <div class="habitude-item"><div class="habitude-icon">🗣️</div><div class="habitude-text">Commencer par « As-salamu alaykum »</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🤝</div><div class="habitude-text">Tenir ses promesses et être honnête</div></div>
+        <div class="habitude-item"><div class="habitude-icon">❤️</div><div class="habitude-text">Respecter ses parents — grande récompense</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text">Éviter la gheeba (médisance) et le mensonge</div></div>
+
+        <div class="learn-section-title">📚 Hadiths sur les bonnes habitudes</div>
+        <div class="hadith-box"><div class="hadith-text">« Le meilleur d'entre vous est celui qui a le meilleur caractère. »</div><div class="hadith-source">— Sahih Al-Bukhari</div></div>
+        <div class="hadith-box"><div class="hadith-text">« Ne sous-estime aucune bonne action, même sourire à ton frère. »</div><div class="hadith-source">— Sahih Muslim</div></div>
+      </div>
+    </div>
+
+    <!-- DOUÂS -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div class="learn-card-header">
+        <div class="learn-card-icon">🤲</div>
+        <div><div class="learn-card-title">Les Douâs essentielles</div><div class="learn-card-sub">Invocations du quotidien</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="doua-item">
+          <div class="doua-title">🌅 En se réveillant</div>
+          <div class="doua-arabic">الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ</div>
+          <div class="doua-fr">« Louange à Allah qui nous a redonné la vie après nous avoir fait mourir, et c'est vers Lui que sera la résurrection. »</div>
+        </div>
+        <div class="doua-item">
+          <div class="doua-title">🍽️ Avant de manger</div>
+          <div class="doua-arabic">بِسْمِ اللَّهِ</div>
+          <div class="doua-fr">« Au nom d'Allah. »</div>
+        </div>
+        <div class="doua-item">
+          <div class="doua-title">🍽️ Après avoir mangé</div>
+          <div class="doua-arabic">الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ</div>
+          <div class="doua-fr">« Louange à Allah qui nous a nourris, abreuvés et nous a faits musulmans. »</div>
+        </div>
+        <div class="doua-item">
+          <div class="doua-title">🚪 En entrant chez soi</div>
+          <div class="doua-arabic">بِسْمِ اللَّهِ وَلَجْنَا وَبِسْمِ اللَّهِ خَرَجْنَا وَعَلَى اللَّهِ رَبِّنَا تَوَكَّلْنَا</div>
+          <div class="doua-fr">« Au nom d'Allah nous entrons, au nom d'Allah nous sortons, et en Allah notre Seigneur nous mettons notre confiance. »</div>
+        </div>
+        <div class="doua-item">
+          <div class="doua-title">😴 Avant de dormir</div>
+          <div class="doua-arabic">بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا</div>
+          <div class="doua-fr">« En Ton nom ô Allah, je meurs et je vis. »</div>
+        </div>
+        <div class="doua-item">
+          <div class="doua-title">😟 En cas de tristesse</div>
+          <div class="doua-arabic">حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ</div>
+          <div class="doua-fr">« Allah nous suffit, Il est le meilleur garant. »</div>
+        </div>
+        <div class="doua-item">
+          <div class="doua-title">🚗 En montant dans un véhicule</div>
+          <div class="doua-arabic">سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ</div>
+          <div class="doua-fr">« Gloire à Celui qui nous a soumis cela, alors que nous n'en étions pas capables. »</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIE DU PROPHÈTE -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div style="height:120px;overflow:hidden;position:relative;border-radius:14px 14px 0 0">
+        <img src="https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.7" alt="Islam">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent,#1a2535)"></div>
+      </div>
+      <div class="learn-card-header">
+        <div class="learn-card-icon">🌙</div>
+        <div><div class="learn-card-title">La vie du Prophète ﷺ</div><div class="learn-card-sub">Seerah — Sa biographie</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="learn-section-title">👶 Naissance et jeunesse</div>
+        <div class="learn-text">Muhammad ﷺ est né à La Mecque en 570 après J.-C., l'année de l'éléphant. Il est issu de la tribu des Quraysh. Son père Abdullah mourut avant sa naissance, et sa mère Aminah mourut quand il avait 6 ans. Il fut élevé par son grand-père Abd Al-Muttalib, puis par son oncle Abu Talib. Il était connu pour sa droiture et son honnêteté, surnommé Al-Amin (le digne de confiance).</div>
+
+        <div class="learn-section-title">📜 La révélation (610 après J.-C.)</div>
+        <div class="learn-text">À 40 ans, dans la grotte de Hira, l'ange Jibrîl lui apporta la première révélation : « Lis au nom de ton Seigneur » (Sourate Al-Alaq). Ce fut le début de sa mission prophétique. Il reçut la révélation pendant 23 ans.</div>
+
+        <div class="learn-section-title">🕌 La da'wa à La Mecque</div>
+        <div class="learn-text">Pendant 13 ans, le Prophète ﷺ appela les Mecquois à l'Islam. Il subit des persécutions, des moqueries et des tortures infligées à ses compagnons. Malgré tout, il continua sa mission avec patience et sagesse.</div>
+
+        <div class="learn-section-title">🌟 L'Hégire (622 après J.-C.)</div>
+        <div class="learn-text">Face aux persécutions, le Prophète ﷺ émigra à Médine (anciennement Yathrib). C'est le début du calendrier islamique. À Médine, il établit la première communauté musulmane unie, basée sur la fraternité et la justice.</div>
+
+        <div class="learn-section-title">⚔️ Les grandes batailles</div>
+        <div class="learn-text">Il dirigea plusieurs batailles défensives : Badr (624), Uhud (625), et Al-Ahzab (627). Ces épreuves forgèrent la communauté musulmane et enseignèrent la foi, la patience et la stratégie.</div>
+
+        <div class="learn-section-title">🕋 La Conquête de La Mecque (630)</div>
+        <div class="learn-text">En l'an 8 de l'Hégire, le Prophète ﷺ entra à La Mecque avec 10 000 compagnons. Il pardonna à ses ennemis et purifia la Ka'ba des idoles. Ce fut une victoire sans violence, guidée par la miséricorde.</div>
+
+        <div class="learn-section-title">💫 Son décès (632 après J.-C.)</div>
+        <div class="learn-text">Après son pèlerinage d'adieu, où il délivra son dernier sermon sur l'égalité et la fraternité, le Prophète ﷺ mourut à Médine à l'âge de 63 ans. Ses derniers mots furent : « Avec le Compagnon Suprême. »</div>
+
+        <div class="hadith-box" style="margin-top:14px"><div class="hadith-text">« J'ai été envoyé pour parfaire les bonnes mœurs. »</div><div class="hadith-source">— Le Prophète Muhammad ﷺ · Al-Bayhaqi</div></div>
+      </div>
+    </div>
+
+    <!-- LES PÉCHÉS À ÉVITER -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div class="learn-card-header">
+        <div class="learn-card-icon">🚫</div>
+        <div><div class="learn-card-title">Les grands péchés à éviter</div><div class="learn-card-sub">Se protéger du haram</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>L'associationnisme (Shirk)</strong> — Le plus grand péché : associer quelqu'un à Allah.</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>La désobéissance aux parents</strong> — Très grave en Islam.</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>La fornication (Zina)</strong> — Toute relation hors mariage est interdite.</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>La consommation d'alcool et de drogues</strong> — Strictement interdit.</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>La ribeaux (intérêt usuraire)</strong> — Éviter les prêts avec intérêts.</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>La médisance et la calomnie</strong> — Parler en mal de quelqu'un en son absence.</div></div>
+        <div class="habitude-item"><div class="habitude-icon">🚫</div><div class="habitude-text"><strong>L'orgueil et l'arrogance</strong> — Allah n'aime pas les orgueilleux.</div></div>
+      </div>
+    </div>
+
+    <!-- LES NOMS D'ALLAH -->
+    <div class="learn-card" onclick="toggleCard(this)">
+      <div class="learn-card-header">
+        <div class="learn-card-icon">✨</div>
+        <div><div class="learn-card-title">Les 99 noms d'Allah</div><div class="learn-card-sub">Al-Asma Al-Husna — Les plus beaux noms</div></div>
+        <div class="learn-card-arrow">›</div>
+      </div>
+      <div class="learn-card-body">
+        <div class="learn-text" style="margin-bottom:12px">Apprendre les noms d'Allah permet de mieux Le connaître et de renforcer sa foi. Voici les plus importants :</div>
+        ${[
+          ['الرَّحْمَنُ','Ar-Rahman','Le Tout Miséricordieux'],
+          ['الرَّحِيمُ','Ar-Rahim','Le Très Miséricordieux'],
+          ['الْمَلِكُ','Al-Malik','Le Roi'],
+          ['الْقُدُّوسُ','Al-Quddus','Le Très Saint'],
+          ['السَّلامُ','As-Salam','La Paix'],
+          ['الْعَزِيزُ','Al-Aziz','Le Tout-Puissant'],
+          ['الْغَفُورُ','Al-Ghafour','Le Pardonneur'],
+          ['الرَّزَّاقُ','Ar-Razzaq','Le Pourvoyeur'],
+          ['الْحَكِيمُ','Al-Hakim','Le Sage'],
+          ['الْوَدُودُ','Al-Wadud','Le Plein d'Amour'],
+          ['الصَّبُورُ','As-Sabour','Le Patient'],
+          ['التَّوَّابُ','At-Tawwab','Celui qui accepte le repentir'],
+        ].map(([ar,tr,fr]) => `<div class="doua-item" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="doua-title">${tr}</div><div class="doua-fr">${fr}</div></div><div style="font-size:20px;color:#fff">${ar}</div></div></div>`).join('')}
+        <div class="learn-text" style="margin-top:8px;color:#8899aa">Et 87 autres noms... Cherche « 99 noms d'Allah » pour les apprendre tous 🤲</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NAV BAS -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-prayer" onclick="switchTab('prayer')">
+    <span class="nav-icon">🕌</span>
+    Prière
+  </button>
+  <button class="nav-btn" id="nav-quran" onclick="switchTab('quran')">
+    <span class="nav-icon">📖</span>
+    Coran
+  </button>
+  <button class="nav-btn" id="nav-learn" onclick="switchTab('learn')">
+    <span class="nav-icon">⭐</span>
+    Apprendre
+  </button>
+</nav>
+
+<!-- ÉCRAN DE BLOCAGE -->
+<div id="block-screen" style="background-image:url(https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=800&q=80);background-size:cover;background-position:center">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,0.82)"></div>
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px">
+  <div class="block-icon">🕌</div>
+  <div class="block-title" id="block-title">C'est l'heure de prier !</div>
+  <div class="block-subtitle">
+    Pose ton téléphone et fais ta prière.<br>
+    L'écran se débloque dans :
+  </div>
+  <div class="block-timer" id="block-timer">15:00</div>
+  <div class="block-timer-label">minutes restantes</div>
+  <div class="ayah">
+    « Établis la prière, car la prière préserve des turpitudes et des choses blameables. »<br>
+    <small style="color:#2ecc71">— Sourate Al-Ankabut, 45</small>
+  </div>
+  </div>
+</div>
+
+<script>
+const PRAYER_NAMES = {
+  Fajr: { fr: 'Fajr', ar: 'الفجر' },
+  Sunrise: null,
+  Dhuhr: { fr: 'Dhuhr', ar: 'الظهر' },
+  Asr: { fr: 'Asr', ar: 'العصر' },
+  Sunset: null,
+  Maghrib: { fr: 'Maghrib', ar: 'المغرب' },
+  Isha: { fr: 'Isha', ar: 'العشاء' },
+};
+
+const PRAYER_DURATION = 20 * 60; // 20 minutes de blocage
+
+let prayerTimes = {};
+let blockEndTime = null;
+let blockInterval = null;
+let notifiedPrayers = new Set();
+let reminderNotified = new Set();
+
+async function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+}
+
+function sendNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      body: body,
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231a6b3c' rx='20'/><text y='.85em' font-size='75' x='12'>🕌</text></svg>",
+      vibrate: [200, 100, 200]
+    });
+  }
+}
+
+async function fetchPrayerTimes() {
+  const now = new Date();
+  const day = now.getDate();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+
+  const url = `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=45.75&longitude=4.85&method=12`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.data.timings;
+  } catch (e) {
+    return null;
+  }
+}
+
+function parseTime(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function formatTime(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return '00:00:00';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}min`;
+  return `${String(m).padStart(2,'0')}min ${String(s).padStart(2,'0')}s`;
+}
+
+function getNextPrayer() {
+  const now = new Date();
+  const prayers = Object.entries(prayerTimes)
+    .filter(([k]) => PRAYER_NAMES[k])
+    .map(([k, v]) => ({ key: k, name: PRAYER_NAMES[k], time: parseTime(v), timeStr: v }));
+
+  for (const p of prayers) {
+    if (p.time > now) return p;
+  }
+  return prayers[0]; // Fajr du lendemain
+}
+
+function startBlock(prayerName) {
+  blockEndTime = new Date(Date.now() + PRAYER_DURATION * 1000);
+  document.getElementById('block-title').textContent = `🙏 ${prayerName} - C'est l'heure !`;
+  document.getElementById('block-screen').classList.add('visible');
+
+  blockInterval = setInterval(() => {
+    const remaining = blockEndTime - Date.now();
+    if (remaining <= 0) {
+      clearInterval(blockInterval);
+      document.getElementById('block-screen').classList.remove('visible');
+      return;
+    }
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    document.getElementById('block-timer').textContent =
+      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+}
+
+function renderPrayers() {
+  const now = new Date();
+  const list = document.getElementById('prayers-list');
+  list.innerHTML = '';
+
+  const prayers = Object.entries(prayerTimes).filter(([k]) => PRAYER_NAMES[k]);
+
+  prayers.forEach(([key, timeStr]) => {
+    const info = PRAYER_NAMES[key];
+    const t = parseTime(timeStr);
+    const isPast = t < now;
+    const isNext = getNextPrayer()?.key === key;
+
+    const item = document.createElement('div');
+    item.className = `prayer-item${isNext ? ' active' : ''}${isPast && !isNext ? ' passed' : ''}`;
+    item.innerHTML = `
+      <div class="prayer-left">
+        <div class="prayer-dot"></div>
+        <div class="prayer-name">${info.fr} <span>${info.ar}</span></div>
+      </div>
+      <div class="prayer-time">${formatTime(timeStr)}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function updateUI() {
+  const now = new Date();
+  const next = getNextPrayer();
+
+  if (next) {
+    const diff = next.time - now;
+    document.getElementById('next-name').textContent = next.name.fr + ' · ' + next.name.ar;
+    document.getElementById('next-time').textContent = formatTime(next.timeStr);
+    document.getElementById('countdown').textContent = `Dans ${formatCountdown(diff)}`;
+    document.getElementById('next-prayer-card').style.display = 'block';
+
+    // Vérifie les prières
+    const prayers = Object.entries(prayerTimes).filter(([k]) => PRAYER_NAMES[k]);
+    prayers.forEach(([key, timeStr]) => {
+      const t = parseTime(timeStr);
+      const diffSec = (t - now) / 1000;
+
+      // Rappel 5 minutes avant
+      if (diffSec > 0 && diffSec <= 300 && !reminderNotified.has(key)) {
+        reminderNotified.add(key);
+        const mins = Math.round(diffSec / 60);
+        sendNotification(
+          '🕌 ' + PRAYER_NAMES[key].fr + ' dans ' + mins + ' minute' + (mins > 1 ? 's' : '') + ' !',
+          'Prépare-toi pour la prière 🤲'
+        );
+      }
+
+      // Blocage à l'heure de la prière
+      const diffAbsSec = Math.abs(diffSec);
+      if (diffAbsSec < 30 && !notifiedPrayers.has(key) && !document.getElementById('block-screen').classList.contains('visible')) {
+        notifiedPrayers.add(key);
+        sendNotification("🕌 C'est l'heure de " + PRAYER_NAMES[key].fr + " !", 'Pose ton téléphone et prie 🤲');
+        startBlock(PRAYER_NAMES[key].fr);
+      }
+    });
+  }
+
+  // Date
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('date-bar').textContent = now.toLocaleDateString('fr-FR', options);
+
+  renderPrayers();
+}
+
+
+// ===== CORAN =====
+let allSurahs = [];
+let currentAudio = null;
+let currentSurahNum = null;
+let isPlaying = false;
+
+
+function toggleCard(el) {
+  el.classList.toggle('open');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'quran' && allSurahs.length === 0) loadSurahs();
+}
+
+async function loadSurahs() {
+  try {
+    const res = await fetch('https://api.alquran.cloud/v1/surah');
+    const data = await res.json();
+    allSurahs = data.data;
+    renderSurahs(allSurahs);
+  } catch(e) {
+    document.getElementById('surah-list').innerHTML = '<p style="color:#e74c3c;text-align:center;padding:20px">Erreur de chargement. Vérifie ta connexion.</p>';
+  }
+}
+
+function renderSurahs(list) {
+  const el = document.getElementById('surah-list');
+  if (list.length === 0) {
+    el.innerHTML = '<p style="color:#8899aa;text-align:center;padding:20px">Aucune sourate trouvée.</p>';
+    return;
+  }
+  el.innerHTML = list.map(s => `
+    <div class="surah-item" onclick="openSurah(${s.number})">
+      <div class="surah-num">${s.number}</div>
+      <div class="surah-info">
+        <div class="surah-name-fr">${s.englishName} · ${s.englishNameTranslation}</div>
+        <div class="surah-name-ar">${s.name}</div>
+      </div>
+      <div class="surah-verses">${s.numberOfAyahs} v.</div>
+    </div>
+  `).join('');
+}
+
+function filterSurahs() {
+  const q = document.getElementById('surah-search').value.toLowerCase();
+  const filtered = allSurahs.filter(s =>
+    s.englishName.toLowerCase().includes(q) ||
+    s.englishNameTranslation.toLowerCase().includes(q) ||
+    s.number.toString().includes(q)
+  );
+  renderSurahs(filtered);
+}
+
+async function openSurah(num) {
+  currentSurahNum = num;
+  const surah = allSurahs.find(s => s.number === num);
+  document.getElementById('sv-name').textContent = surah.englishName;
+  document.getElementById('sv-info').textContent = surah.englishNameTranslation + ' · ' + surah.numberOfAyahs + ' versets';
+  document.getElementById('sv-ar').textContent = surah.name;
+  document.getElementById('surah-view').classList.add('visible');
+  document.getElementById('verses-container').innerHTML = '<div class="verse-loading"><div class="spinner"></div><p>Chargement des versets...</p></div>';
+  stopAudio();
+
+  try {
+    const [arRes, frRes] = await Promise.all([
+      fetch('https://api.alquran.cloud/v1/surah/' + num),
+      fetch('https://api.alquran.cloud/v1/surah/' + num + '/fr.hamidullah')
+    ]);
+    const arData = await arRes.json();
+    const frData = await frRes.json();
+    const arVerses = arData.data.ayahs;
+    const frVerses = frData.data.ayahs;
+
+    document.getElementById('verses-container').innerHTML = arVerses.map((v, i) => `
+      <div class="verse-item">
+        <div class="verse-num">Verset ${v.numberInSurah}</div>
+        <div class="verse-arabic">${v.text}</div>
+        <div class="verse-french">${frVerses[i]?.text || ''}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('verses-container').innerHTML = '<p style="color:#e74c3c;text-align:center;padding:20px">Erreur de chargement.</p>';
+  }
+}
+
+function closeSurah() {
+  document.getElementById('surah-view').classList.remove('visible');
+  stopAudio();
+}
+
+function toggleAudio() {
+  if (isPlaying) {
+    stopAudio();
+  } else {
+    playAudio();
+  }
+}
+
+function playAudio() {
+  if (!currentSurahNum) return;
+  stopAudio();
+  const num = String(currentSurahNum).padStart(3, '0');
+  const url = `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${num}.mp3`;
+  currentAudio = new Audio(url);
+  currentAudio.play().then(() => {
+    isPlaying = true;
+    document.getElementById('play-btn').textContent = '⏸';
+  }).catch(() => {
+    document.getElementById('play-btn').textContent = '▶';
+  });
+  currentAudio.onended = () => {
+    isPlaying = false;
+    document.getElementById('play-btn').textContent = '▶';
+  };
+}
+
+function stopAudio() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  isPlaying = false;
+  const btn = document.getElementById('play-btn');
+  if (btn) btn.textContent = '▶';
+}
+
+async function init() {
+  const timings = await fetchPrayerTimes();
+  if (!timings) {
+    document.getElementById('loading').innerHTML = '<p style="color:#e74c3c">Erreur de chargement. Vérifie ta connexion.</p>';
+    return;
+  }
+
+  await requestNotifPermission();
+  prayerTimes = timings;
+  document.getElementById('loading').style.display = 'none';
+
+  updateUI();
+  setInterval(updateUI, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
